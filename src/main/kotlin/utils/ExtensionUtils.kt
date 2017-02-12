@@ -1,9 +1,35 @@
 package utils
 
-import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtClass
+import com.intellij.openapi.vfs.VirtualFile
+import java.util.regex.Pattern
 
-fun KtClass.getSemicolons(): PsiElement? {
-    return node.findChildByType(KtTokens.SEMICOLON)?.psi
+fun VirtualFile.findFilesRecursive(): List<VirtualFile> {
+    val files = arrayListOf<VirtualFile>()
+    this.children.forEach { currentChild ->
+        if (currentChild.isDirectory) {
+            findFilesRecursive().forEach { files.add(it) }
+        } else if (currentChild.extension == "kt" || currentChild.extension == "java" || currentChild.extension == "xml") {
+            files.add(currentChild)
+        } else {}
+    }
+
+    return files
 }
+
+tailrec fun VirtualFile.findChildByRelativePath(path: String): VirtualFile? {
+    if (path.isEmpty() && path.split("/").size <= 1) return null
+    val child = this.findChild(path.split("/")[1])
+
+    if (child == null) {
+        return null
+    } else if (path.split("/").size > 2 && child.isDirectory) {
+        val len = path.split("/")[1].length
+        val nextPath = path.substring(len + 1)
+        return this.findChildByRelativePath(nextPath)
+    } else {
+        return child
+    }
+}
+
+fun String.isMatched(regex: String) = Pattern.compile(regex).matcher(this).find()
+fun String.isCommentOut() = Pattern.compile("^//").matcher(this.trim()).find()

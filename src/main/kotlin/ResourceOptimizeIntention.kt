@@ -1,15 +1,18 @@
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.xml.XmlFile
+import utils.findChildByRelativePath
+import utils.findFilesRecursive
+import utils.isCommentOut
+import utils.isMatched
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.util.regex.Pattern
 
 class ResourceOptimizeIntention : IntentionAction {
-    private val assetType = "string"
+    private val valuesXmlList = listOf("colors.xml", "dimens.xml", "strings.xml", "styles.xml")
+    private var assetType = ""
     override fun getFamilyName() = text
     override fun getText() = "Optimize resources"
     override fun startInWriteAction() = true
@@ -19,19 +22,18 @@ class ResourceOptimizeIntention : IntentionAction {
     }
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-        val xml = file as XmlFile
+        if (file !is XmlFile) return
+        if (valuesXmlList.contains(file.containingFile.name).not()) return
+        assetType = file.containingFile.name.replace("s.xml", "")
         val appDirIndex = project.baseDir.canonicalPath.toString().split("/").size
-        val appDirName = xml.containingDirectory.toString().split("/")[appDirIndex]
+        val appDirName = file.containingDirectory.toString().split("/")[appDirIndex]
 
-        xml.rootTag?.findSubTags(assetType)?.map {
+        file.rootTag?.findSubTags(assetType)?.map {
             it.attributes.map { attr ->
-                val appResName = "R.${assetType}.${attr.displayValue}"
-                val assetResName = "@${assetType}/${attr.displayValue}"
-                val child = findChildByRelativePath(project.baseDir, "/${appDirName}/src/main")
-                println("${child?.canonicalPath}")
-                if (child == null) return
-
-                val files = findFilesRecursive(child)
+                val appResName = "R.$assetType.${attr.displayValue}"
+                val assetResName = "@$assetType/${attr.displayValue}"
+                val child = project.baseDir.findChildByRelativePath("/$appDirName/src/main") ?: return
+                val files = child.findFilesRecursive()
 
                 var isDeletable = true
                 files.forEach READ_WHOLE_FILES@ { targetFile ->
@@ -39,8 +41,8 @@ class ResourceOptimizeIntention : IntentionAction {
                     var line = reader.readLine()
                     while (line != null) {
                         println(line)
-                        if (isMatched(line, appResName) || isMatched(line, assetResName)) {
-                            if (isCommentOut(line).not()) {
+                        if (line.isMatched(appResName) || line.isMatched(assetResName)) {
+                            if (line.isCommentOut().not()) {
                                 isDeletable = false
                                 break
                             }
@@ -57,37 +59,4 @@ class ResourceOptimizeIntention : IntentionAction {
             }
         }
     }
-
-    private tailrec fun findFilesRecursive(virtualFile: VirtualFile): List<VirtualFile> {
-        val files = arrayListOf<VirtualFile>()
-        virtualFile.children.forEach { currentChild ->
-            if (currentChild.isDirectory) {
-                findFilesRecursive(currentChild).forEach { files.add(it) }
-            } else if (currentChild.extension == "kt" || currentChild.extension == "java" || currentChild.extension == "xml") {
-                files.add(currentChild)
-            } else {}
-        }
-
-        return files
-    }
-
-    private tailrec fun findChildByRelativePath(virtualFile: VirtualFile, path: String): VirtualFile? {
-        if (path.isEmpty() && path.split("/").size <= 1) return null
-        val child = virtualFile.findChild(path.split("/")[1])
-
-        if (child == null) {
-            return null
-        } else if (path.split("/").size > 2 && child.isDirectory) {
-            val len = path.split("/")[1].length
-            val nextPath = path.substring(len + 1)
-            return findChildByRelativePath(child, nextPath)
-        } else {
-            return child
-        }
-    }
-
-    private fun isMatched(target: String, regex: String) = Pattern.compile(regex).matcher(target).find()
-
-    private fun isCommentOut(str: String) =
-        Pattern.compile("^//").matcher(str.trim()).find()
 }
