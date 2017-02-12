@@ -1,0 +1,37 @@
+<idea-plugin version="2">
+    <id>com.github.tommykw</id>
+    <name>Optimize resources plugin</name>
+    <version>0.0.1</version>
+    <vendor email="destinys.lotus.1108mn@gmail.com" url="https://github.com/tommykw/android-optimize-resources-plugin">Optimize resources plugin</vendor>
+
+    <description><![CDATA[
+      This plugin help you to optimize resources in your Android project.
+    ]]></description>
+
+    <change-notes><![CDATA[
+      0.0.1: Initial release.<br>
+    ]]>
+    </change-notes>
+
+    <idea-version since-build="131"/>
+
+    <application-components>
+    </application-components>
+
+    <project-components>
+    </project-components>
+
+    <actions>
+    </actions>
+
+    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+         on how to target different products -->
+    <depends>org.jetbrains.kotlin</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <intentionAction>
+            <className>ResourceOptimizeIntention</className>
+            <category>Kotlin</category>
+        </intentionAction>
+    </extensions>
+</idea-plugin>
