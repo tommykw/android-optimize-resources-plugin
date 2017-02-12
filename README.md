@@ -1,0 +1,1 @@
+# android-optimize-resources-plugin
