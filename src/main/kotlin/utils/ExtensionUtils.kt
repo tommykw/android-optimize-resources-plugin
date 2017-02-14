@@ -5,9 +5,9 @@ import java.util.regex.Pattern
 
 fun VirtualFile.findFilesRecursive(): List<VirtualFile> {
     val files = arrayListOf<VirtualFile>()
-    this.children.forEach { currentChild ->
+    children.forEach { currentChild ->
         if (currentChild.isDirectory) {
-            findFilesRecursive().forEach { files.add(it) }
+            currentChild.findFilesRecursive().forEach { files.add(it) }
         } else if (currentChild.extension == "kt" || currentChild.extension == "java" || currentChild.extension == "xml") {
             files.add(currentChild)
         } else {}
@@ -18,14 +18,12 @@ fun VirtualFile.findFilesRecursive(): List<VirtualFile> {
 
 tailrec fun VirtualFile.findChildByRelativePath(path: String): VirtualFile? {
     if (path.isEmpty() && path.split("/").size <= 1) return null
-    val child = this.findChild(path.split("/")[1])
+    val child = this.findChild(path.split("/")[1]) ?: return null
 
-    if (child == null) {
-        return null
-    } else if (path.split("/").size > 2 && child.isDirectory) {
+    if (path.split("/").size > 2 && child.isDirectory) {
         val len = path.split("/")[1].length
         val nextPath = path.substring(len + 1)
-        return this.findChildByRelativePath(nextPath)
+        return child.findChildByRelativePath(nextPath)
     } else {
         return child
     }

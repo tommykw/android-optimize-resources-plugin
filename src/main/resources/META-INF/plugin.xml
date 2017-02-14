@@ -22,16 +22,13 @@
     </project-components>
 
     <actions>
+        <group id="OptimizeResources.CodeMenu" text="Optimize Resources" description="Optimize Resources">
+            <add-to-group group-id="CodeMenu" anchor="last"  />
+            <action id="OptimizeResources.CodeMenu" class="ResourceOptimizeAction" text="Optimize Resources" description="Optimize Resources" />
+        </group>
     </actions>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
     <depends>org.jetbrains.kotlin</depends>
-
-    <extensions defaultExtensionNs="com.intellij">
-        <intentionAction>
-            <className>ResourceOptimizeIntention</className>
-            <category>Kotlin</category>
-        </intentionAction>
-    </extensions>
 </idea-plugin>
