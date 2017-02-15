@@ -1,5 +1,6 @@
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -16,6 +17,46 @@ class ResourceOptimizeAction : AnAction() {
 
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project ?: return
+        optimizeValuesXmlList(project)
+        optimizeDrawablePngList(project)
+    }
+
+    private fun optimizeDrawablePngList(project: Project) {
+        val appName = findAppName(project) ?: return
+        findDrawablePngList(project).forEach { png ->
+            val resourceName = png.name.replace(".png", "")
+            val child = project.baseDir.findChildByRelativePath("/$appName/src/main") ?: return
+            val files = child.findFilesRecursive()
+
+            var isDeletable = true
+            files.forEach FILES_LOOP@ { targetFile ->
+                val reader = BufferedReader(InputStreamReader(targetFile.inputStream, "UTF-8"))
+                var line = reader.readLine()
+                while (line != null) {
+                    val appResName = "R.drawable.${resourceName}"
+                    val assetResName = "@drawable/${resourceName}"
+                    println("appResName : $appResName")
+                    println("assetResName : $assetResName")
+
+                    if (line.isMatched(appResName) || line.isMatched(assetResName)) {
+                        if (line.isCommentOut().not()) {
+                            isDeletable = false
+                            break
+                        }
+                    }
+
+                    line = reader.readLine()
+                }
+                reader.close()
+                if (isDeletable) return@FILES_LOOP
+            }
+
+            val file = PsiManager.getInstance(project).findFile(png)
+            WriteCommandAction.runWriteCommandAction(project, { file?.delete() })
+        }
+    }
+
+    private fun optimizeValuesXmlList(project: Project) {
         val appName = findAppName(project) ?: return
 
         findValuesXmlList(project).forEach { xml ->
@@ -33,7 +74,6 @@ class ResourceOptimizeAction : AnAction() {
                         val reader = BufferedReader(InputStreamReader(targetFile.inputStream, "UTF-8"))
                         var line = reader.readLine()
                         while (line != null) {
-                            println(line)
                             if (line.isMatched(appResName) || line.isMatched(assetResName)) {
                                 if (line.isCommentOut().not()) {
                                     isDeletable = false
@@ -68,5 +108,13 @@ class ResourceOptimizeAction : AnAction() {
         val appName = findAppName(project) ?: return arrayOf()
         val child = project.baseDir.findChildByRelativePath("/${appName}/src/main/res/values") ?: return arrayOf()
         return child.children
+    }
+
+    private fun findDrawablePngList(project: Project): List<VirtualFile> {
+        val pngList = arrayListOf<VirtualFile>()
+        val appName = findAppName(project) ?: return pngList.toList()
+        val child = project.baseDir.findChildByRelativePath("/${appName}/src/main/res/drawable") ?: return pngList.toList()
+        child.children.forEach { if (it.extension == "png") pngList.add(it) }
+        return pngList.toList()
     }
 }
