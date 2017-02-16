@@ -11,6 +11,7 @@ import utils.isCommentOut
 import utils.isMatched
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import com.intellij.openapi.ui.Messages
 
 class ResourceOptimizeAction : AnAction() {
     private val allowValuesXmlList = listOf("colors.xml", "dimens.xml", "strings.xml", "integers.xml")
@@ -19,6 +20,7 @@ class ResourceOptimizeAction : AnAction() {
         val project = event.project ?: return
         optimizeValuesXmlList(project)
         optimizeDrawablePngList(project)
+        Messages.showMessageDialog(project, "Optimize Resources has successfully completed", "Optimize Resource Result", Messages.getInformationIcon())
     }
 
     private fun optimizeDrawablePngList(project: Project) {
