@@ -22,9 +22,9 @@
     </project-components>
 
     <actions>
-        <group id="OptimizeResources.CodeMenu" text="Optimize Resources" description="Optimize Resources">
+        <group id="OptimizeResources.CodeMenu.Group" text="Optimize Resources" description="Optimize Resources">
             <add-to-group group-id="CodeMenu" anchor="last"  />
-            <action id="OptimizeResources.CodeMenu" class="ResourceOptimizeAction" text="Optimize Resources" description="Optimize Resources" />
+            <action id="OptimizeResources.CodeMenu.Action" class="ResourceOptimizeAction" text="Optimize Resources" description="Optimize Resources" />
         </group>
     </actions>
 

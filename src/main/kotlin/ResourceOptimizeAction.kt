@@ -37,9 +37,6 @@ class ResourceOptimizeAction : AnAction() {
                 while (line != null) {
                     val appResName = "R.drawable.${resourceName}"
                     val assetResName = "@drawable/${resourceName}"
-                    println("appResName : $appResName")
-                    println("assetResName : $assetResName")
-
                     if (line.isMatched(appResName) || line.isMatched(assetResName)) {
                         if (line.isCommentOut().not()) {
                             isDeletable = false
@@ -53,8 +50,9 @@ class ResourceOptimizeAction : AnAction() {
                 if (isDeletable) return@FILES_LOOP
             }
 
-            val file = PsiManager.getInstance(project).findFile(png)
-            WriteCommandAction.runWriteCommandAction(project, { file?.delete() })
+            PsiManager.getInstance(project).findFile(png)?.let { file ->
+                WriteCommandAction.runWriteCommandAction(project, { file.delete() })
+            }
         }
     }
 
@@ -86,10 +84,10 @@ class ResourceOptimizeAction : AnAction() {
                             line = reader.readLine()
                         }
                         reader.close()
-                        if (isDeletable) return@FILES_LOOP
+                        if (isDeletable.not()) return@FILES_LOOP
                     }
 
-                    if (isDeletable) attr.parent.delete()
+                    if (isDeletable) WriteCommandAction.runWriteCommandAction(project, { attr.parent.delete() })
                 }
             }
         }
